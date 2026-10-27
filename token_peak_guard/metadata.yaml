@@ -1,5 +1,6 @@
 name: token_peak_guard
 display_name: Token 高峰守卫
+logo_path: logo.png
 short_desc: 按 DeepSeek 峰谷计费时段锁住高峰期，帮你省 token
 desc: |-
   **用途**：DeepSeek 峰谷计费的高峰时段（工作日 09:00-12:00、14:00-18:00）把机器人锁住，只放管理员说话，把 token 花在半价时段。
