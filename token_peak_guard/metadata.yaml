@@ -14,7 +14,7 @@ desc: |-
   **操作**：WebUI 配置页改参数，或用 `/高峰` 系列命令管理（状态、统计、开关、锁死、放行、白名单、时段、节假日、周末、日报），命令仅管理员可用。
 version: 0.3.0
 author: 大肥鱼
-repo: ""
+repo: "https://github.com/433800/token_peak_guard"
 astrbot_version: ">=4.0.0"
 support_platforms:
   - aiocqhttp
