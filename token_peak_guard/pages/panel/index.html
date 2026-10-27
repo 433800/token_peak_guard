@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>高峰守卫</title>
+  <script src="/api/plugin/page/bridge-sdk.js"></script>
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('astrbot-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --line: #e3e9f2;
+      --text: #16233a;
+      --sub: #6a7a92;
+      --blue: #2f6fed;
+      --blue-soft: #eaf1ff;
+      --green: #1fa971;
+      --amber: #d99422;
+      --red: #d9534f;
+    }
+    html[data-theme="dark"] {
+      --bg: #131722;
+      --card: #1b2130;
+      --line: #2a3345;
+      --text: #e6ecf7;
+      --sub: #93a1b8;
+      --blue: #6b9cff;
+      --blue-soft: #1e2a44;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.6 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 24px 18px 48px; }
+    .head { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .head h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    .head .tip { color: var(--sub); font-size: 12px; margin-left: auto; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .card h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sub);
+      margin: 0 0 14px;
+      letter-spacing: .04em;
+    }
+
+    /* 状态区 */
+    .status { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 6px rgba(31,169,113,.14);
+      flex: 0 0 auto;
+    }
+    .dot.peak { background: var(--amber); box-shadow: 0 0 0 6px rgba(217,148,34,.16); }
+    .dot.locked { background: var(--red); box-shadow: 0 0 0 6px rgba(217,83,79,.16); }
+    .dot.off { background: #9aa7bb; box-shadow: 0 0 0 6px rgba(154,167,187,.16); }
+    .status-main { font-size: 17px; font-weight: 600; }
+    .status-sub { color: var(--sub); font-size: 12px; margin-top: 2px; }
+    .pill {
+      margin-left: auto;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      white-space: nowrap;
+    }
+
+    /* 行 */
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px dashed var(--line);
+    }
+    .row:last-child { border-bottom: 0; }
+    .row .label { flex: 0 0 108px; color: var(--sub); font-size: 13px; }
+    .row .desc { color: var(--sub); font-size: 12px; }
+    .row .grow { flex: 1 1 auto; min-width: 0; }
+
+    /* 开关 */
+    .switch { position: relative; width: 42px; height: 24px; flex: 0 0 auto; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch span {
+      position: absolute; inset: 0; cursor: pointer;
+      background: #c3cede; border-radius: 999px; transition: .18s;
+    }
+    .switch span::after {
+      content: ""; position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px; background: #fff; border-radius: 50%;
+      transition: .18s;
+    }
+    .switch input:checked + span { background: var(--blue); }
+    .switch input:checked + span::after { transform: translateX(18px); }
+
+    select, input[type="text"] {
+      font: inherit;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 7px 10px;
+      outline: none;
+      max-width: 100%;
+    }
+    select:focus, input[type="text"]:focus { border-color: var(--blue); }
+    input[type="text"] { width: 100%; }
+
+    button {
+      font: inherit;
+      border: 0;
+      border-radius: 9px;
+      padding: 8px 16px;
+      background: var(--blue);
+      color: #fff;
+      cursor: pointer;
+    }
+    button.ghost { background: transparent; color: var(--blue); border: 1px solid var(--line); }
+    button:disabled { opacity: .55; cursor: default; }
+
+    /* 用量 */
+    .stats { display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 16px; }
+    .stat .num { font-size: 22px; font-weight: 600; }
+    .stat .cap { font-size: 12px; color: var(--sub); }
+    .bars { display: flex; align-items: flex-end; gap: 4px; height: 92px; }
+    .bar { flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; }
+    .bar i {
+      display: block; width: 100%;
+      background: linear-gradient(180deg, var(--blue), rgba(47,111,237,.35));
+      border-radius: 4px 4px 0 0;
+      min-height: 2px;
+    }
+    .bar b { font-size: 10px; color: var(--sub); font-weight: 400; white-space: nowrap; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+      background: #16233a; color: #fff; font-size: 13px;
+      padding: 9px 18px; border-radius: 999px;
+      opacity: 0; pointer-events: none; transition: .22s;
+      max-width: 80vw;
+    }
+    .toast.show { opacity: .95; transform: translateX(-50%) translateY(0); }
+    .toast.err { background: #b7352f; }
+    .muted { color: var(--sub); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>高峰守卫</h1>
+      <span class="tip" id="clock"></span>
+    </div>
+
+    <div class="card">
+      <div class="status">
+        <span class="dot" id="dot"></span>
+        <div>
+          <div class="status-main" id="status-main">读取中…</div>
+          <div class="status-sub" id="status-sub"></div>
+        </div>
+        <span class="pill" id="windows">—</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>开关</h2>
+      <div class="row">
+        <span class="label">总开关</span>
+        <label class="switch"><input type="checkbox" id="sw-enabled"><span></span></label>
+        <span class="grow desc">关掉后只统计用量，不再拦人</span>
+      </div>
+      <div class="row">
+        <span class="label">锁死模式</span>
+        <label class="switch"><input type="checkbox" id="sw-lock"><span></span></label>
+        <span class="grow desc">不管几点、周末还是节假日，非管理员全拦</span>
+      </div>
+      <div class="row">
+        <span class="label">高峰提醒</span>
+        <label class="switch"><input type="checkbox" id="sw-notice"><span></span></label>
+        <span class="grow desc">被拦时回一句提示</span>
+      </div>
+      <div class="row">
+        <span class="label">周末照拦</span>
+        <label class="switch"><input type="checkbox" id="sw-weekend"><span></span></label>
+        <span class="grow desc">官方周末算谷时，开了就把周末也当高峰</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>规则</h2>
+      <div class="row">
+        <span class="label">模式</span>
+        <select id="sel-mode">
+          <option value="peak">peak · 按峰谷时段拦</option>
+          <option value="off">off · 只统计不拦</option>
+        </select>
+      </div>
+      <div class="row">
+        <span class="label">放行范围</span>
+        <select id="sel-grant"></select>
+      </div>
+      <div class="row">
+        <span class="label">高峰时段</span>
+        <div class="grow"><input type="text" id="inp-windows" placeholder="09:00-12:00 14:00-18:00"></div>
+      </div>
+      <div class="row">
+        <span class="label">锁死回复</span>
+        <div class="grow"><input type="text" id="inp-locktext" placeholder="现在锁着呢，等管理员放开再来吧"></div>
+      </div>
+      <div class="row">
+        <span></span>
+        <div class="grow"></div>
+        <button id="btn-save">保存</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>用量</h2>
+      <div class="stats">
+        <div class="stat"><div class="num" id="stat-today">—</div><div class="cap">今日</div></div>
+        <div class="stat"><div class="num" id="stat-range">—</div><div class="cap" id="stat-range-cap">近 14 天</div></div>
+      </div>
+      <div class="bars" id="bars"></div>
+      <div class="muted" style="margin-top:8px">只统计经过本插件的模型调用，单位 token。</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function () {
+    var api = window.AstrBotPluginPage || window.AstrBotPluginView;
+    var $ = function (id) { return document.getElementById(id); };
+    var state = null;
+    var saving = false;
+
+    function toast(msg, isErr) {
+      var el = $('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (isErr ? ' err' : '');
+      clearTimeout(el._t);
+      el._t = setTimeout(function () { el.className = 'toast' + (isErr ? ' err' : ''); }, 2200);
+    }
+
+    function unwrap(res) {
+      if (res && typeof res === 'object') {
+        if (res.status === 'error') throw new Error(res.message || '请求失败');
+        if (res.success === false) throw new Error(res.error || res.message || '请求失败');
+        if (res.success === true && res.data) return res.data;
+      }
+      return res || {};
+    }
+
+    function fmt(n) {
+      n = Number(n) || 0;
+      if (n >= 100000000) return (n / 100000000).toFixed(2) + '亿';
+      if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+      return String(n);
+    }
+
+    function render(d) {
+      state = d;
+      var dotClass = 'dot';
+      var main = '非高峰';
+      if (!d.enabled) { dotClass += ' off'; main = '守卫已关'; }
+      else if (d.locked) { dotClass += ' locked'; main = '锁死中'; }
+      else if (d.blocked) { dotClass += ' peak'; main = '高峰期'; }
+      $('dot').className = dotClass;
+      $('status-main').textContent = main;
+
+      var sub = '现在 ' + d.now + ' · ' + d.weekday + ' · ' + d.day_note;
+      if (d.blocked && d.until) sub += ' · 到 ' + d.until + ' 放开';
+      if (!d.peak_day && !d.locked) sub += ' · 今天全天不拦';
+      $('status-sub').textContent = sub;
+      $('windows').textContent = (d.windows && d.windows.length ? d.windows.join('  ') : '无时段') + ' · ' + d.source;
+      $('clock').textContent = '刷新于 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false });
+
+      $('sw-enabled').checked = !!d.enabled;
+      $('sw-lock').checked = !!d.hard_lock;
+      $('sw-notice').checked = !!d.notice_enabled;
+      $('sw-weekend').checked = !!d.skip_weekends;
+
+      $('sel-mode').value = d.mode === 'off' ? 'off' : 'peak';
+      var sel = $('sel-grant');
+      if (sel.options.length !== (d.grant_list || []).length) {
+        sel.innerHTML = '';
+        (d.grant_list || []).forEach(function (it) {
+          var o = document.createElement('option');
+          o.value = it.value;
+          o.textContent = it.label;
+          sel.appendChild(o);
+        });
+      }
+      sel.value = d.grant;
+
+      if (document.activeElement !== $('inp-windows')) {
+        $('inp-windows').value = (d.windows || []).join(' ');
+      }
+      if (document.activeElement !== $('inp-locktext')) {
+        $('inp-locktext').value = d.lock_text || '';
+      }
+
+      $('stat-today').textContent = fmt(d.today_tokens);
+      $('stat-range').textContent = fmt(d.range_tokens);
+      $('stat-range-cap').textContent = '近 ' + d.analysis_days + ' 天';
+
+      var series = d.series || [];
+      var max = 1;
+      series.forEach(function (p) { if (p.tokens > max) max = p.tokens; });
+      var bars = $('bars');
+      bars.innerHTML = '';
+      series.forEach(function (p) {
+        var col = document.createElement('div');
+        col.className = 'bar';
+        col.title = p.day + ' · ' + fmt(p.tokens);
+        var bar = document.createElement('i');
+        bar.style.height = Math.max(2, Math.round((p.tokens / max) * 78)) + 'px';
+        var cap = document.createElement('b');
+        cap.textContent = p.day.slice(3);
+        col.appendChild(bar);
+        col.appendChild(cap);
+        bars.appendChild(col);
+      });
+    }
+
+    async function load() {
+      try {
+        render(unwrap(await api.apiGet('status')));
+      } catch (e) {
+        $('status-main').textContent = '读取失败';
+        $('status-sub').textContent = e.message || String(e);
+      }
+    }
+
+    async function patch(body, okText) {
+      if (saving) return;
+      saving = true;
+      $('btn-save').disabled = true;
+      try {
+        render(unwrap(await api.apiPost('settings', body)));
+        toast(okText || '已保存');
+      } catch (e) {
+        toast(e.message || '保存失败', true);
+        load();
+      } finally {
+        saving = false;
+        $('btn-save').disabled = false;
+      }
+    }
+
+    function readWindows() {
+      return $('inp-windows').value.split(/[\s，,、]+/).filter(Boolean);
+    }
+
+    var binds = [
+      ['sw-enabled', 'enabled', '总开关'],
+      ['sw-lock', 'hard_lock', '锁死模式'],
+      ['sw-notice', 'notice_enabled', '高峰提醒'],
+      ['sw-weekend', 'skip_weekends', '周末照拦']
+    ];
+    binds.forEach(function (b) {
+      var el = $(b[0]);
+      el.addEventListener('change', function () {
+        var body = {};
+        body[b[1]] = el.checked;
+        patch(body, b[2] + (el.checked ? '已开' : '已关'));
+      });
+    });
+
+    $('sel-mode').addEventListener('change', function () {
+      patch({ mode: this.value }, '模式已改');
+    });
+    $('sel-grant').addEventListener('change', function () {
+      patch({ grant: this.value }, '放行范围已改');
+    });
+
+    $('btn-save').addEventListener('click', function () {
+      var body = { windows: readWindows() };
+      var text = $('inp-locktext').value.trim();
+      if (text) body.lock_text = text;
+      patch(body, '规则已保存');
+    });
+
+    function start() {
+      (api.ready ? api.ready() : Promise.resolve()).then(load);
+      setInterval(function () {
+        if (!saving && !document.hidden) load();
+      }, 30000);
+    }
+
+    if (api) {
+      start();
+    } else {
+      var _tries = 0;
+      var _timer = setInterval(function () {
+        api = window.AstrBotPluginPage || window.AstrBotPluginView;
+        if (api || ++_tries > 100) {
+          clearInterval(_timer);
+          if (!api) {
+            $('status-main').textContent = '这个页面要在面板里打开';
+            $('status-sub').textContent = '没拿到面板桥接脚本';
+            return;
+          }
+          start();
+        }
+      }, 50);
+    }
+  })();
+  </script>
+</body>
+</html>

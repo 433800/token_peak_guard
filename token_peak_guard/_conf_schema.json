@@ -1,0 +1,152 @@
+{
+  "priority": {
+    "description": "优先设置（总控）",
+    "hint": "最上面的三样，一般只动这里。下面的都是细节",
+    "type": "object",
+    "items": {
+      "enabled": {
+        "description": "总功能开关",
+        "hint": "关掉后谁都不拦，只默默统计用量",
+        "type": "bool",
+        "default": true
+      },
+      "hard_lock": {
+        "description": "锁死模式",
+        "hint": "打开后连谷时也拦：除管理员外的聊天、命令、定时任务全部禁止，直到关掉为止。适合出远门、余额告急的时候",
+        "type": "bool",
+        "default": false
+      },
+      "hard_lock_text": {
+        "description": "锁死时的回复",
+        "hint": "锁死状态下别人发消息就回这句。可用变量：{now} 当前时间、{windows} 高峰时段",
+        "type": "text",
+        "default": "现在锁着呢，等管理员放开再来吧"
+      },
+      "grant": {
+        "description": "放行范围（总开关的附属开关）",
+        "hint": "总开关打开后，谁能说话：admin_only=只有管理员（其他人都拦，默认）；global=跟着 AstrBot 访问控制里的全局白名单走，不用另填；whitelist=用本插件下面那份名单；everyone=全部人放开，只统计不拦",
+        "type": "string",
+        "options": [
+          "admin_only",
+          "global",
+          "whitelist",
+          "everyone"
+        ],
+        "default": "admin_only"
+      },
+      "whitelist": {
+        "description": "本插件自己的白名单 ID",
+        "hint": "放行范围选 whitelist 时生效。填 QQ/用户 ID，一个一行。注意：全局访问控制白名单开着的话，不在这份全局名单里的会话根本到不了这里，只填这里没用",
+        "type": "list",
+        "default": []
+      }
+    }
+  },
+  "mode": {
+    "description": "拦截模式",
+    "hint": "peak=按官方峰谷时段拦（默认，推荐）；off=只统计不拦，谁都能说话",
+    "type": "string",
+    "options": [
+      "peak",
+      "off"
+    ],
+    "default": "peak"
+  },
+  "peak_windows": {
+    "description": "高峰时段",
+    "hint": "DeepSeek 官方高峰：工作日 09:00-12:00、14:00-18:00。这里填的就是「会拦人」的时段，想自定义直接改",
+    "type": "list",
+    "default": [
+      "09:00-12:00",
+      "14:00-18:00"
+    ]
+  },
+  "skip_weekends": {
+    "description": "周末不拦",
+    "hint": "周六周日在官方口径里全天都是空闲时段（半价），默认不拦。关掉就周末也照拦",
+    "type": "bool",
+    "default": true
+  },
+  "holidays": {
+    "description": "法定节假日",
+    "hint": "这些日子全天算空闲时段，不拦。写法：2027-01-01 或 2027-01-01~2027-01-03（用波浪号，别用半角减号）",
+    "type": "list",
+    "default": [
+      "2026-01-01~2026-01-03",
+      "2026-02-15~2026-02-23",
+      "2026-04-04~2026-04-06",
+      "2026-05-01~2026-05-05",
+      "2026-06-19~2026-06-21",
+      "2026-09-25~2026-09-27",
+      "2026-10-01~2026-10-07"
+    ]
+  },
+  "analysis_days": {
+    "description": "统计天数",
+    "hint": "用量统计和日报回看最近多少天（只影响看数据，不影响拦截）",
+    "type": "int",
+    "default": 14
+  },
+  "debug_log": {
+    "description": "诊断日志",
+    "hint": "开启后会把每条消息的平台、发送者 ID、会话和文本前 30 字写进 peak_guard_diag.log。排查问题时开，平时建议关",
+    "type": "bool",
+    "default": false
+  },
+  "admin_ids": {
+    "description": "额外管理员 ID",
+    "hint": "这些 QQ/用户 ID 在高峰期和锁死状态下都不受限制（AstrBot 管理员本身自动放行）",
+    "type": "list",
+    "default": []
+  },
+  "bypass_platforms": {
+    "description": "放行的平台",
+    "hint": "这些平台的消息不拦，默认放行 webchat（网页版），免得自己被拦在外面",
+    "type": "list",
+    "default": [
+      "webchat"
+    ]
+  },
+  "notice_enabled": {
+    "description": "拦截时回一句提示",
+    "hint": "关掉就静默丢弃",
+    "type": "bool",
+    "default": true
+  },
+  "notice_cooldown_minutes": {
+    "description": "提示冷却（分钟）",
+    "hint": "同一个会话多久内最多提示一次，防止刷屏",
+    "type": "int",
+    "default": 30
+  },
+  "notice_text": {
+    "description": "高峰提示文案",
+    "hint": "可用变量：{windows} 高峰时段、{until} 放开时间、{now} 当前时间",
+    "type": "text",
+    "default": "现在是计费高峰（{windows}），{until} 再聊吧"
+  },
+  "keep_days": {
+    "description": "统计保留天数",
+    "hint": "超过这个天数的按小时统计会被清掉",
+    "type": "int",
+    "default": 45
+  },
+  "daily_report_enabled": {
+    "description": "每日用量日报",
+    "hint": "每天定时把前一天的每小时用量推给你，方便看高峰时段划得准不准",
+    "type": "bool",
+    "default": false
+  },
+  "daily_report_time": {
+    "description": "日报时间",
+    "hint": "24 小时制 HH:MM，例如 21:00",
+    "type": "string",
+    "default": "21:00"
+  },
+  "daily_report_target": {
+    "description": "日报发到哪个会话",
+    "hint": "留空 = 自动发给最近一次管理员说话的会话；也可填 platform:type:session",
+    "type": "string",
+    "default": ""
+  }
+}

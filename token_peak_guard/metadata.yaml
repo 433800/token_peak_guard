@@ -1,0 +1,28 @@
+name: token_peak_guard
+display_name: Token 高峰守卫
+short_desc: 按 DeepSeek 峰谷计费时段锁住高峰期，帮你省 token
+desc: |-
+  **用途**：DeepSeek 峰谷计费的高峰时段（工作日 09:00-12:00、14:00-18:00）把机器人锁住，只放管理员说话，把 token 花在半价时段。
+
+  **适用**：自用或小群养 bot、余额不算宽裕、想避开高峰期闲聊刷量；也适合出远门一键锁死。
+
+  **平台**：基于 AstrBot 通用消息事件，aiocqhttp（QQ / OneBot）已实测，qq_official、telegram、discord、webchat 同样生效，需 AstrBot 4.0.0+。
+
+  **功能**：高峰拦截（时段可改）、锁死模式、四档放行范围、按小时用量统计、每日日报、节假日与周末放行。
+
+  **操作**：WebUI 配置页改参数，或用 `/高峰` 系列命令管理（状态、统计、开关、锁死、放行、白名单、时段、节假日、周末、日报），命令仅管理员可用。
+version: 0.3.0
+author: 大肥鱼
+repo: ""
+astrbot_version: ">=4.0.0"
+support_platforms:
+  - aiocqhttp
+  - qq_official
+  - telegram
+  - discord
+  - webchat
+tags:
+  - token
+  - cost
+  - deepseek
+  - quota
